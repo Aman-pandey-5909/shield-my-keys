@@ -3,7 +3,18 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Lock, Plus, Trash2, Eye, EyeOff } from "lucide-react";
+import { Lock, Plus, Trash2, Eye, EyeOff, Download } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   calculatePasswordStrength,
   getStrengthText,
@@ -99,6 +110,24 @@ export function PasswordManager() {
     });
   };
 
+  const downloadPasswords = () => {
+    const dataStr = JSON.stringify(passwords, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `passwords_${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Passwords downloaded",
+      description: "Your passwords have been exported to JSON",
+    });
+  };
+
   const getStrengthBadgeColor = (level: StrengthLevel) => {
     switch (level) {
       case "weak":
@@ -170,9 +199,35 @@ export function PasswordManager() {
 
       {/* Passwords List */}
       <div className="space-y-3">
-        <h3 className="font-semibold text-lg">
-          Saved Passwords ({passwords.length})
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-lg">
+            Saved Passwords ({passwords.length})
+          </h3>
+          {passwords.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Passwords
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Download Passwords?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will download all your saved passwords as a JSON file. Make sure to store this file securely as it contains sensitive information.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={downloadPasswords}>
+                    Download
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
 
         {passwords.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
